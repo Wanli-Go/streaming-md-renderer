@@ -1,0 +1,55 @@
+{
+  "name": "streaming-md-renderer",
+  "version": "0.1.0",
+  "description": "A real-time streaming markdown tokenizer and React renderer. Processes LLM output chunk-by-chunk with support for code blocks, tables, LaTeX math, and inline formatting.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./parser": {
+      "types": "./dist/parser/index.d.ts",
+      "import": "./dist/parser/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "markdown",
+    "streaming",
+    "llm",
+    "tokenizer",
+    "react",
+    "katex",
+    "latex",
+    "real-time",
+    "chat"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "dependencies": {
+    "classnames": "^2.5.1",
+    "katex": "^0.16.0"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.7",
+    "@types/react": "^19.1.2",
+    "typescript": "~5.8.3"
+  }
+}
