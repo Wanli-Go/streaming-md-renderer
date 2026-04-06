@@ -1,40 +1,58 @@
 # streaming-md-renderer
 
-A real-time streaming markdown tokenizer and React renderer designed for LLM chat interfaces. Processes text chunk-by-chunk as it arrives from streaming APIs (SSE), producing typed tokens that drive word-by-word rendering with animation support.
+**Version 0.2.0**
+
+A real-time streaming markdown tokenizer and React renderer designed specifically for LLM chat interfaces.
+
+Processes text **chunk-by-chunk** as it arrives from streaming APIs (OpenAI, Anthropic, DeepSeek, SSE, etc.), with excellent support for code blocks with live animations, tables, and LaTeX math.
 
 ## Features
 
-- **Streaming-first** — processes arbitrary chunk boundaries from SSE/streaming APIs
-- **Code blocks** — fenced code blocks with language detection and streaming content
-- **LaTeX math** — display (`\[...\]`, `$$...$$`) and inline (`\(...\)`) with KaTeX rendering
-- **Tables** — GitHub-flavored markdown tables with header/body detection
-- **Inline formatting** — headings, bold, inline code, horizontal rules, list items
-- **Chunk-boundary handling** — delimiters split across chunks are correctly detected
-- **Two rendering paths** — streaming (chunk-by-chunk) and complete (batch for history)
+- **Streaming-first** design with robust chunk boundary handling
+- Real-time **code blocks** with character-by-character animation + Prism syntax highlighting
+- **LaTeX math** support (inline and display) via KaTeX
+- **GitHub-style tables** with streaming row accumulation
+- Headings, bold, inline code, horizontal rules, lists
+- Two modes: `streaming` (animated) and `static` (for chat history)
+- High-level `useStreamingMarkdown()` hook for instant integration
+- Framework-agnostic parser + convenient React layer
 
-## Architecture
+## Quick Start
 
+### Recommended: High-level hook
+
+```tsx
+import { useStreamingMarkdown } from 'streaming-md-renderer/react';
+
+function StreamingMessage() {
+  const { rendered, appendChunk, reset, isEmpty } = useStreamingMarkdown({
+    mode: 'streaming',        // or 'static'
+    reduceMotion: false,
+    language: 'en'            // for copy button text
+  });
+
+  // Call this when you receive a chunk from your LLM
+  const onReceiveChunk = (chunk: string) => {
+    appendChunk(chunk);
+  };
+
+  return (
+    <div className="prose prose-invert max-w-none">
+      {isEmpty ? <div className="italic text-zinc-500">Thinking...</div> : rendered}
+    </div>
+  );
+}
 ```
-Streaming API chunk
-       │
-       ▼
-┌──────────────────────┐
-│  ContentProcessor    │  ← Stateful tokenizer (framework-agnostic)
-│  processContent()    │
-└──────────┬───────────┘
-           │ ContentToken[]
-           ▼
-┌──────────────────────┐
-│  renderSimpleToken() │  ← React rendering layer
-│  buildTableElement() │
-│  MathRenderer        │
-└──────────────────────┘
-           │ React.ReactNode
-           ▼
-       Your UI
-```
 
-The parser layer (`streaming-md-renderer/parser`) has **zero framework dependencies** — it can be used with Vue, Svelte, or any other framework by consuming the `ContentToken` stream directly.
+### Low-level API (for advanced control)
+
+```tsx
+import { ContentProcessor } from 'streaming-md-renderer';
+import { useUnifiedCodeBlockManager, renderSimpleToken } from 'streaming-md-renderer/react';
+
+const processor = new ContentProcessor();
+const codeBlockManager = useUnifiedCodeBlockManager({ mode: 'streaming' });
+```
 
 ## Installation
 
@@ -42,107 +60,31 @@ The parser layer (`streaming-md-renderer/parser`) has **zero framework dependenc
 npm install streaming-md-renderer
 ```
 
-Peer dependencies: `react >= 18.0.0`
+**Peer dependencies:**
+- `react >= 18`
+- `prismjs` (for code block syntax highlighting)
 
-## Quick Start
+## Live Demo
 
-### Streaming (chunk-by-chunk)
+Open `demo/index.html` to see both streaming and static rendering in action.
 
-```tsx
-import { ContentProcessor, renderSimpleToken } from 'streaming-md-renderer';
+## API Overview
 
-const processor = new ContentProcessor({
-  languageAliases: { types: 'typescript', k: 'kotlin', kot: 'kotlin' },
-});
+- `useStreamingMarkdown(options)` — High-level hook (recommended)
+- `ContentProcessor` — Core streaming tokenizer
+- `useUnifiedCodeBlockManager({ mode: 'streaming' | 'static' })` — Code block state manager
+- `renderSimpleToken()` — Renders simple markdown elements
+- `CodeBlock` — Beautiful code block component with copy button
 
-// For each SSE chunk:
-function onChunk(chunk: string) {
-  const tokens = processor.processContent(chunk);
-  tokens.forEach(token => {
-    const result = renderSimpleToken(token, `key-${Date.now()}`);
-    if (result) {
-      // Append result.element to your UI
-    }
-    // Handle code_block_*, code_content, table_row separately
-  });
-}
+## Mode Options
 
-// Reset between messages:
-processor.reset();
-```
-
-### Complete content (chat history)
-
-```tsx
-import { ContentProcessor } from 'streaming-md-renderer';
-
-const processor = new ContentProcessor();
-const tokens = processor.processCompleteContent(markdownString);
-// tokens is ContentToken[] — render all at once
-```
-
-### Parser only (no React)
-
-```tsx
-import { ContentProcessor } from 'streaming-md-renderer/parser';
-import type { ContentToken } from 'streaming-md-renderer/parser';
-
-const processor = new ContentProcessor();
-const tokens: ContentToken[] = processor.processContent(chunk);
-// Use tokens with your own rendering layer
-```
-
-## Token Types
-
-| Token | Description | Key metadata |
-|-------|-------------|-------------|
-| `text` | Inline text | `titleLevel`, `isBold`, `isBackticked` |
-| `code_block_start` | Opening ` ``` ` | `codeBlockId` |
-| `code_content` | Code inside a block | `codeBlockId`, `language` |
-| `code_block_end` | Closing ` ``` ` | `codeBlockId` |
-| `horizontal_rule` | `---` | — |
-| `list_item` | `- ` at start of line | — |
-| `table_row` | `\| col \| col \|` | `tableCells`, `isTableHeader`, `isTableSeparator` |
-| `newline` | Explicit line break | — |
-| `math_block` | Display math `\[...\]` or `$$...$$` | `displayMode: true` |
-| `math_inline` | Inline math `\(...\)` | `displayMode: false` |
-
-## Algorithm Details
-
-### Newline handling
-
-Newlines are split out of every text chunk **before** any formatting detection runs. This guarantees:
-
-1. `newlineFlag` is set deterministically (single location, no early-return bugs)
-2. Header detection (`#`) always sees content at the start of a line
-3. Newlines render as visible `<span>\n</span>` elements via `whitespace: pre-wrap`
-
-### Block-level spacing
-
-After block-level elements (`<hr>`, display math), a `skipNewlineCount` counter suppresses the next N newline tokens to prevent double-spacing with CSS margins.
-
-### Math delimiter chunk-splitting
-
-LLM streaming APIs may split `\[` into `\` + `[` across chunks. Two mechanisms handle this:
-
-- **Opening delimiters**: A trailing `\` is saved as `pendingMathPrefix` and prepended to the next chunk
-- **Closing delimiters**: The math buffer is combined with incoming content (`buffer + chunk`) before scanning for the closing delimiter
-
-### Table streaming
-
-Tables are detected when `|` appears at the start of a line. Content is accumulated in `tableRowBuffer` until a newline arrives, then the complete row is parsed and emitted. Newline tokens are **not** emitted between `table_row` tokens, allowing the renderer to group consecutive rows into a single `<table>`.
-
-## Exports
-
-### `streaming-md-renderer` (main)
-Everything — parser + React layer.
-
-### `streaming-md-renderer/parser`
-Framework-agnostic: `ContentProcessor`, `ContentToken`, `ProcessingState`, `ContentProcessorOptions`.
-
-### `streaming-md-renderer/react`
-React components and helpers: `renderSimpleToken`, `buildTableElement`, `renderCellContent`, `MathRenderer`, `TableRowData`, `RenderedElement`.
+- **`streaming`**: Real-time typewriter animation, uses `flushSync` for smooth updates
+- **`static`**: Faster, synchronous updates suitable for chat history
 
 ## License
 
 MIT
+
+---
+
+Built for smooth LLM chat experiences.

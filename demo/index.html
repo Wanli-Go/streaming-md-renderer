@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>streaming-md-renderer Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+  <style>
+    .prose {
+      max-width: none;
+    }
+    .fade-in {
+      animation: fadeIn 0.3s ease-in forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0.3; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 p-8">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold mb-2">streaming-md-renderer</h1>
+    <p class="text-zinc-400 mb-8">Real-time streaming markdown renderer for LLM UIs</p>
+
+    <div class="grid grid-cols-2 gap-8">
+      <!-- Streaming Demo -->
+      <div class="bg-zinc-900 rounded-2xl p-6">
+        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+          <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+          Streaming Demo
+        </h2>
+        <div id="streaming-root" class="prose prose-invert min-h-[300px] text-sm"></div>
+        <button onclick="startStreamingDemo()" 
+                class="mt-4 px-6 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-sm font-medium">
+          Start Streaming Demo
+        </button>
+      </div>
+
+      <!-- Static Demo -->
+      <div class="bg-zinc-900 rounded-2xl p-6">
+        <h2 class="text-xl font-semibold mb-4">Static Content</h2>
+        <div id="static-root" class="prose prose-invert text-sm"></div>
+      </div>
+    </div>
+
+    <div class="mt-12 text-xs text-zinc-500 text-center">
+      v0.2.0 • Built with streaming-md-renderer
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0",
+      "react-dom": "https://esm.sh/react-dom@18.2.0",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+      "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+      "streaming-md-renderer": "../dist/index.js",
+      "streaming-md-renderer/react": "../dist/react/index.js",
+      "streaming-md-renderer/parser": "../dist/parser/index.js",
+      "prismjs": "https://esm.sh/prismjs@1.30.0",
+      "prismjs/themes/prism-okaidia.css": "https://esm.sh/prismjs@1.30.0/themes/prism-okaidia.css",
+      "prismjs/components/prism-python": "https://esm.sh/prismjs@1.30.0/components/prism-python",
+      "prismjs/components/prism-javascript": "https://esm.sh/prismjs@1.30.0/components/prism-javascript",
+      "prismjs/components/prism-typescript": "https://esm.sh/prismjs@1.30.0/components/prism-typescript",
+      "prismjs/components/prism-kotlin": "https://esm.sh/prismjs@1.30.0/components/prism-kotlin",
+      "prismjs/components/prism-jsx": "https://esm.sh/prismjs@1.30.0/components/prism-jsx",
+      "prismjs/components/prism-tsx": "https://esm.sh/prismjs@1.30.0/components/prism-tsx",
+      "prismjs/components/prism-java": "https://esm.sh/prismjs@1.30.0/components/prism-java",
+      "prismjs/components/prism-c": "https://esm.sh/prismjs@1.30.0/components/prism-c",
+      "prismjs/components/prism-cpp": "https://esm.sh/prismjs@1.30.0/components/prism-cpp",
+      "prismjs/components/prism-go": "https://esm.sh/prismjs@1.30.0/components/prism-go",
+      "prismjs/components/prism-css": "https://esm.sh/prismjs@1.30.0/components/prism-css",
+      "katex": "https://esm.sh/katex@0.16.0",
+      "katex/dist/katex.min.css": "https://esm.sh/katex@0.16.0/dist/katex.min.css",
+      "classnames": "https://esm.sh/classnames@2.5.1",
+      "../dist/parser/ContentProcessor": "../dist/parser/ContentProcessor.js",
+      "../dist/parser/types": "../dist/parser/types.js",
+      "../dist/parser/index": "../dist/parser/index.js",
+      "../dist/react/MathRenderer": "../dist/react/MathRenderer.js",
+      "../dist/react/tokenRenderers": "../dist/react/tokenRenderers.js",
+      "../dist/react/useUnifiedCodeBlockManager": "../dist/react/useUnifiedCodeBlockManager.js",
+      "../dist/react/useStreamingMarkdown": "../dist/react/useStreamingMarkdown.js",
+      "../dist/react/useStaticMarkdown": "../dist/react/useStaticMarkdown.js",
+      "../dist/react/CodeBlock": "../dist/react/CodeBlock.js",
+      "../dist/react/index": "../dist/react/index.js"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import React, { useState, useCallback, useRef, useEffect } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { useStreamingMarkdown, useStaticMarkdown } from 'streaming-md-renderer/react';
+    import { ContentProcessor } from 'streaming-md-renderer';
+    import { renderSimpleToken } from 'streaming-md-renderer';
+
+    // Static Demo Component
+    function StaticDemo() {
+      const content = `# Hello World
+
+This is a **bold** text with \`inline code\`.
+
+## Features
+
+- Real-time streaming
+- Code blocks with syntax highlighting
+- LaTeX math: \\(E = mc^2\\)
+- Tables
+
+| Col 1 | Col 2 |
+|-------|-------|
+| Hello | World |
+| Foo | Bar |
+
+\`\`\`python
+def hello():
+    print("Hello from streaming-md-renderer!")
+\`\`\`
+
+$$\\int_{0}^{\\infty} e^{-x} dx = 1$$`;
+
+      const { rendered, isEmpty } = useStaticMarkdown(content);
+
+      if (isEmpty) {
+        return React.createElement('div', { className: 'text-zinc-500 italic' }, 'No content');
+      }
+
+      return React.createElement('div', null, 
+        React.createElement('div', { className: 'text-emerald-400 text-xs mb-2' }, 'STATIC CONTENT'),
+        ...rendered
+      );
+    }
+
+    // Streaming Demo Component
+    function StreamingDemo() {
+      const { rendered, appendChunk, reset, isEmpty } = useStreamingMarkdown();
+      const [isStreaming, setIsStreaming] = useState(false);
+
+      const start = useCallback(() => {
+        reset();
+        setIsStreaming(true);
+
+        const chunks = [
+          "# Welcome to the demo\n\n",
+          "This library handles **streaming** markdown from LLM APIs.\n\n",
+          "It supports code blocks:\n\n",
+          "```js\n",
+          "console.log('Hello from streaming!');\n",
+          "```\n\n",
+          "And also **tables**, *math*, and more."
+        ];
+
+        let index = 0;
+        const interval = setInterval(() => {
+          if (index < chunks.length) {
+            appendChunk(chunks[index]);
+            index++;
+          } else {
+            clearInterval(interval);
+            setIsStreaming(false);
+          }
+        }, 400);
+      }, [appendChunk, reset]);
+
+      useEffect(() => {
+        window.startStreamingDemo = start;
+      }, [start]);
+
+      if (isEmpty && !isStreaming) {
+        return React.createElement('div', { className: 'text-zinc-500 italic' }, 'Click button to start...');
+      }
+
+      return React.createElement('div', null,
+        React.createElement('div', { className: 'text-emerald-400 text-xs mb-2' }, 
+          isStreaming ? 'LIVE STREAMING...' : 'STREAMING COMPLETE'
+        ),
+        ...rendered
+      );
+    }
+
+    // Wrap components in error boundaries
+    function ErrorBoundary({ children, name }) {
+      const [error, setError] = useState(null);
+      
+      useEffect(() => {
+        const errorHandler = (errorEvent) => {
+          console.error(`Error in ${name}:`, errorEvent.error);
+          setError(errorEvent.error?.message || 'Unknown error');
+        };
+        
+        window.addEventListener('error', errorHandler);
+        return () => window.removeEventListener('error', errorHandler);
+      }, []);
+
+      if (error) {
+        return React.createElement('div', { className: 'text-red-400 text-xs' }, 
+          `Error in ${name}: ${error}`
+        );
+      }
+      
+      return children;
+    }
+
+    function StaticDemoWrapper() {
+      return React.createElement(ErrorBoundary, { name: 'StaticDemo' }, 
+        React.createElement(StaticDemo)
+      );
+    }
+
+    function StreamingDemoWrapper() {
+      return React.createElement(ErrorBoundary, { name: 'StreamingDemo' }, 
+        React.createElement(StreamingDemo)
+      );
+    }
+
+    // Mount React apps
+    const streamingRoot = createRoot(document.getElementById('streaming-root'));
+    streamingRoot.render(React.createElement(StreamingDemoWrapper));
+
+    const staticRoot = createRoot(document.getElementById('static-root'));
+    staticRoot.render(React.createElement(StaticDemoWrapper));
+  </script>
+</body>
+</html>

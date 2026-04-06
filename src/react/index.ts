@@ -11,3 +11,25 @@ export type {
   RenderedElement,
   SimpleRenderResult,
 } from './tokenRenderers';
+
+export {
+  useUnifiedCodeBlockManager,
+  type CodeBlockData,
+  type UseUnifiedCodeBlockManagerReturn,
+  type UseCodeBlockManagerOptions,
+} from './useUnifiedCodeBlockManager';
+
+export {
+  useStreamingMarkdown,
+  type UseStreamingMarkdownOptions,
+  type UseStreamingMarkdownReturn,
+} from './useStreamingMarkdown';
+
+export {
+  useStaticMarkdown,
+  type UseStaticMarkdownOptions,
+  type UseStaticMarkdownReturn,
+} from './useStaticMarkdown';
+
+export { default as CodeBlock } from './CodeBlock';
+export type { CodeBlockProps } from './CodeBlock';
