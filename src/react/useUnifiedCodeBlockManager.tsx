@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState, createElement, useMemo } from "react";
 import classNames from "classnames";
-import { flushSync } from "react-dom";
 
 export interface CodeBlockData {
   id: string;
@@ -115,19 +114,19 @@ export const useUnifiedCodeBlockManager = (
       buffer.textBuffer.push(spanElement);
 
       if (content.includes('\n')) {
-        // Flush completed lines when newline appears
-        flushSync(() => {
-          setCodeBlocks(prev => ({
+        const completedChunk = buffer.buffer;
+
+        buffer.buffer = '';
+        buffer.textBuffer = [];
+
+        setCodeBlocks(prev => ({
             ...prev,
             [id]: {
               ...prev[id],
-              lines: prev[id].lines + buffer.buffer,
+              lines: prev[id].lines + completedChunk,
               text: [] 
             }
           }));
-        });
-        buffer.buffer = '';
-        buffer.textBuffer = [];
         return;
       }
 
@@ -155,17 +154,15 @@ export const useUnifiedCodeBlockManager = (
     if (!buffer) return;
 
     if (isStreaming) {
-      flushSync(() => {
-        setCodeBlocks(prev => ({
-          ...prev,
-          [id]: {
-            ...prev[id],
-            lines: prev[id].lines + buffer.buffer,
-            text: [],
-            isComplete: true
-          }
-        }));
-      });
+      setCodeBlocks(prev => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          lines: prev[id].lines + buffer.buffer,
+          text: [],
+          isComplete: true
+        }
+      }));
     } else {
       setCodeBlocks(prev => ({
         ...prev,
