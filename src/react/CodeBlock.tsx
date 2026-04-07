@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from "react";
-import Prism from "prismjs";
+// Import Prism via setup module that ensures globalThis.Prism is set
+// BEFORE the language component side-effect imports run.
+import { Prism } from "./prismSetup";
 import "prismjs/themes/prism-okaidia.css";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-javascript";
