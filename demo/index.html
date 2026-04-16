@@ -4,52 +4,192 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>streaming-md-renderer Demo</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/themes/prism-tomorrow.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/prism.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
     .prose {
       max-width: none;
     }
+
     .fade-in {
       animation: fadeIn 0.3s ease-in forwards;
     }
+
     @keyframes fadeIn {
       from { opacity: 0.3; }
       to { opacity: 1; }
     }
+
+    /* ── Demo layout ─────────────────────────────────────────────── */
+
+    .demo-body {
+      background: #09090b;
+      color: #f4f4f5;
+      padding: 2rem;
+    }
+
+    .demo-container {
+      max-width: 56rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .demo-title {
+      font-size: 2.25rem;
+      line-height: 2.5rem;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .demo-subtitle {
+      color: #a1a1aa;
+      margin-top: 0;
+      margin-bottom: 2rem;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+    }
+
+    .demo-card {
+      background: #18181b;
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+
+    .demo-card-title {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .demo-card-title--static {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .demo-pulse-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+      background: #22c55e;
+      border-radius: 9999px;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .demo-content {
+      max-width: none;
+      min-height: 300px;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+
+    .demo-content--static {
+      max-width: none;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+
+    .demo-start-btn {
+      margin-top: 1rem;
+      padding: 0.5rem 1.5rem;
+      background: #7c3aed;
+      color: inherit;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .demo-start-btn:hover {
+      background: #6d28d9;
+    }
+
+    .demo-footer {
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      line-height: 1rem;
+      color: #71717a;
+      text-align: center;
+    }
+
+    /* ── Demo JS component classes ────────────────────────────── */
+
+    .demo-placeholder {
+      color: #71717a;
+      font-style: italic;
+    }
+
+    .demo-status {
+      color: #34d399;
+      font-size: 0.75rem;
+      line-height: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .demo-error {
+      color: #f87171;
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 p-8">
-  <div class="max-w-4xl mx-auto">
-    <h1 class="text-4xl font-bold mb-2">streaming-md-renderer</h1>
-    <p class="text-zinc-400 mb-8">Real-time streaming markdown renderer for LLM UIs</p>
+<body class="demo-body">
+  <div class="demo-container">
+    <h1 class="demo-title">streaming-md-renderer</h1>
+    <p class="demo-subtitle">Real-time streaming markdown renderer for LLM UIs</p>
 
-    <div class="grid grid-cols-2 gap-8">
+    <div class="demo-grid">
       <!-- Streaming Demo -->
-      <div class="bg-zinc-900 rounded-2xl p-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
-          <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+      <div class="demo-card">
+        <h2 class="demo-card-title">
+          <span class="demo-pulse-dot"></span>
           Streaming Demo
         </h2>
-        <div id="streaming-root" class="prose prose-invert min-h-[300px] text-sm"></div>
+        <div id="streaming-root" class="demo-content"></div>
         <button onclick="startStreamingDemo()" 
-                class="mt-4 px-6 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-sm font-medium">
+                class="demo-start-btn">
           Start Streaming Demo
         </button>
       </div>
 
       <!-- Static Demo -->
-      <div class="bg-zinc-900 rounded-2xl p-6">
-        <h2 class="text-xl font-semibold mb-4">Static Content</h2>
-        <div id="static-root" class="prose prose-invert text-sm"></div>
+      <div class="demo-card">
+        <h2 class="demo-card-title--static">Static Content</h2>
+        <div id="static-root" class="demo-content--static"></div>
       </div>
     </div>
 
-    <div class="mt-12 text-xs text-zinc-500 text-center">
-      v0.2.0 • Built with streaming-md-renderer
+    <div class="demo-footer">
+      v0.2.0 &bull; Built with streaming-md-renderer
     </div>
   </div>
 
@@ -128,11 +268,11 @@ $$\\int_{0}^{\\infty} e^{-x} dx = 1$$`;
       const { rendered, isEmpty } = useStaticMarkdown(content);
 
       if (isEmpty) {
-        return React.createElement('div', { className: 'text-zinc-500 italic' }, 'No content');
+        return React.createElement('div', { className: 'demo-placeholder' }, 'No content');
       }
 
       return React.createElement('div', null, 
-        React.createElement('div', { className: 'text-emerald-400 text-xs mb-2' }, 'STATIC CONTENT'),
+        React.createElement('div', { className: 'demo-status' }, 'STATIC CONTENT'),
         ...rendered
       );
     }
@@ -173,11 +313,11 @@ $$\\int_{0}^{\\infty} e^{-x} dx = 1$$`;
       }, [start]);
 
       if (isEmpty && !isStreaming) {
-        return React.createElement('div', { className: 'text-zinc-500 italic' }, 'Click button to start...');
+        return React.createElement('div', { className: 'demo-placeholder' }, 'Click button to start...');
       }
 
       return React.createElement('div', null,
-        React.createElement('div', { className: 'text-emerald-400 text-xs mb-2' }, 
+        React.createElement('div', { className: 'demo-status' }, 
           isStreaming ? 'LIVE STREAMING...' : 'STREAMING COMPLETE'
         ),
         ...rendered
@@ -199,7 +339,7 @@ $$\\int_{0}^{\\infty} e^{-x} dx = 1$$`;
       }, []);
 
       if (error) {
-        return React.createElement('div', { className: 'text-red-400 text-xs' }, 
+        return React.createElement('div', { className: 'demo-error' }, 
           `Error in ${name}: ${error}`
         );
       }

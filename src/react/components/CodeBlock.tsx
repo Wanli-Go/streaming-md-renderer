@@ -1,7 +1,8 @@
 import React, { useRef, useEffect } from "react";
+import classNames from "classnames";
 // Import Prism via setup module that ensures globalThis.Prism is set
 // BEFORE the language component side-effect imports run.
-import { Prism } from "./prismSetup";
+import { Prism } from "../util/prismSetup";
 import "prismjs/themes/prism-okaidia.css";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-javascript";
@@ -21,6 +22,8 @@ export interface CodeBlockProps {
   language: string;
   syslang?: string;
   onCopy?: () => void;
+  /** If true, skip fade-in animation on the code block */
+  reduceMotion?: boolean;
 }
 
 const CodeBlock: React.FC<CodeBlockProps> = ({
@@ -28,7 +31,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   text,
   language,
   syslang = 'en',
-  onCopy
+  onCopy,
+  reduceMotion = false,
 }) => {
   const codeRef = useRef<HTMLElement>(null);
 
@@ -46,33 +50,33 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   }, [code]);
 
   return (
-    <div className="relative">
-      <div className="z-10 h-10 bg-[#1a1a1a] w-full absolute top-0 left-0 rounded-t-md flex items-center">
-        <span className="ps-5 text-sm text-gray-400">
+    <div className={classNames('smd-code-wrapper', { 'fade-in': !reduceMotion })}>
+      <div className="smd-code-header">
+        <span className="smd-code-lang">
           {language || 'text'}
         </span>
       </div>
-      <div className="sticky top-10 z-10">
-        <div className="absolute end-0 top-0 flex h-10 items-center pe-4">
+      <div className="smd-code-copy-sticky">
+        <div className="smd-code-copy-area">
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleCopy();
             }}
-            className="text-sm bg-[#1a1a1a] rounded-sm cursor-pointer font-bold p-[5px_8px] border-[1px] border-[transparent] transition-all hover:border-[#646cff]"
+            className="smd-code-copy-btn"
           >
             {syslang === 'zh' ? '复制' : 'Copy'}
           </button>
         </div>
       </div>
-      <pre className={`language-${language || 'text'} rounded-lg my-4 relative !overflow-auto !pl-0 !pr-0 !pb-0 !pt-10`}>
-        <div className="pt-4"></div>
+      <pre className={`language-${language || 'text'} smd-code-pre`}>
+        <div className="smd-code-spacer"></div>
         <code
           ref={codeRef}
-          className={`${text.length ? '' : 'pb-6'} language-${language || 'text'} w-full block overflow-visible pl-4 pr-4`}
+          className={`${text.length ? '' : 'smd-code-element--empty'} language-${language || 'text'} smd-code-element`}
         ></code>
-        <div className="overflow-hidden">
-          <div className={`pl-4 pr-4 ${text.length ? 'pb-6' : ''}`}>{text}</div>
+        <div className="smd-code-text-wrapper">
+          <div className={`smd-code-text ${text.length ? 'smd-code-text--has-content' : ''}`}>{text}</div>
         </div>
       </pre>
     </div>

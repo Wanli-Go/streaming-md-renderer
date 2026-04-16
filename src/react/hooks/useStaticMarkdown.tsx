@@ -1,14 +1,14 @@
 import { useMemo, useRef, useEffect } from 'react';
-import { ContentProcessor } from '../parser/ContentProcessor';
-import { ContentToken } from '../parser/types';
+import { ContentProcessor } from '../../parser/ContentProcessor';
+import { ContentToken } from '../../parser/types';
 import {
   renderSimpleToken,
   RenderedElement,
   TableRowData,
   buildTableElement,
-} from './tokenRenderers';
+} from '../components/tokenRenderers';
 import { useUnifiedCodeBlockManager } from './useUnifiedCodeBlockManager';
-import CodeBlock from './CodeBlock';
+import CodeBlock from '../components/CodeBlock';
 
 export interface UseStaticMarkdownOptions {
   reduceMotion?: boolean;
@@ -98,12 +98,12 @@ export const useStaticMarkdown = (
         if (last && last.type === 'table') {
           const updatedRows = [...(last.tableRows ?? []), newRow];
           last.tableRows = updatedRows;
-          last.element = buildTableElement(last.id, updatedRows);
+          last.element = buildTableElement(last.id, updatedRows, reduceMotion);
         } else {
           const rows = [newRow];
           elements.push({
             id: elementId,
-            element: buildTableElement(elementId, rows),
+            element: buildTableElement(elementId, rows, reduceMotion),
             type: 'table',
             tableRows: rows,
           });
@@ -125,6 +125,7 @@ export const useStaticMarkdown = (
                 text={block.text || []}
                 language={block.language || ''}
                 syslang={language}
+                reduceMotion={reduceMotion}
               />
             ),
           };

@@ -1,9 +1,13 @@
 import React, { useMemo } from 'react';
+import classNames from 'classnames';
 import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
-export interface MathRendererProps {
+export interface MathBlockProps {
   math: string;
   displayMode: boolean;
+  /** If true, skip fade-in animation on the math element */
+  reduceMotion?: boolean;
 }
 
 /**
@@ -11,13 +15,14 @@ export interface MathRendererProps {
  * - displayMode=true  → centered block equation
  * - displayMode=false → inline equation
  */
-export const MathRenderer: React.FC<MathRendererProps> = ({ math, displayMode }) => {
+export const MathBlock: React.FC<MathBlockProps> = ({ math, displayMode, reduceMotion = false }) => {
   const html = useMemo(() => {
     try {
       return katex.renderToString(math, {
         displayMode,
-        throwOnError: false,
+        throwOnError: true,
         trust: true,
+        output: 'mathml'
       });
     } catch {
       return null;
@@ -26,7 +31,7 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ math, displayMode })
 
   if (!html) {
     return (
-      <span className="font-mono text-amber-200">
+      <span className={classNames('smd-math-fallback', { 'fade-in': !reduceMotion })}>
         {displayMode ? `\\[${math}\\]` : `\\(${math}\\)`}
       </span>
     );
@@ -35,11 +40,11 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ math, displayMode })
   if (displayMode) {
     return (
       <div
-        className="my-3 overflow-x-auto"
+        className={classNames('smd-math-block', { 'smd-math-block-enter': !reduceMotion })}
         dangerouslySetInnerHTML={{ __html: html }}
       />
     );
   }
 
-  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+  return <span className={classNames('smd-math-inline', { 'fade-in': !reduceMotion })} dangerouslySetInnerHTML={{ __html: html }} />;
 };

@@ -1,14 +1,14 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { ContentProcessor } from '../parser/ContentProcessor';
-import { ContentToken } from '../parser/types';
+import { ContentProcessor } from '../../parser/ContentProcessor';
+import { ContentToken } from '../../parser/types';
 import {
   renderSimpleToken,
   RenderedElement,
   TableRowData,
   buildTableElement,
-} from './tokenRenderers';
+} from '../components/tokenRenderers';
 import { useUnifiedCodeBlockManager } from './useUnifiedCodeBlockManager';
-import CodeBlock from './CodeBlock';
+import CodeBlock from '../components/CodeBlock';
 
 export interface UseStreamingMarkdownOptions {
   reduceMotion?: boolean;
@@ -109,12 +109,12 @@ export const useStreamingMarkdown = (
           if (last && last.type === 'table') {
             const updatedRows = [...(last.tableRows ?? []), newRow];
             last.tableRows = updatedRows;
-            last.element = buildTableElement(last.id, updatedRows);
+            last.element = buildTableElement(last.id, updatedRows, reduceMotion);
           } else {
             const rows = [newRow];
             newContent.push({
               id: elementId,
-              element: buildTableElement(elementId, rows),
+              element: buildTableElement(elementId, rows, reduceMotion),
               type: 'table',
               tableRows: rows,
             });
@@ -142,6 +142,7 @@ export const useStreamingMarkdown = (
                   text={block.text || []}
                   language={block.language || ''}
                   syslang={language}
+                  reduceMotion={reduceMotion}
                 />
               )
             };

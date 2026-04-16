@@ -1,35 +1,37 @@
-export { MathRenderer } from './MathRenderer';
-export type { MathRendererProps } from './MathRenderer';
+import './styles.css';
+
+export { MathBlock } from './components/MathBlock';
+export type { MathBlockProps } from './components/MathBlock';
 
 export {
   renderSimpleToken,
   renderCellContent,
   buildTableElement,
-} from './tokenRenderers';
+} from './components/tokenRenderers';
 export type {
   TableRowData,
   RenderedElement,
   SimpleRenderResult,
-} from './tokenRenderers';
+} from './components/tokenRenderers';
 
 export {
   useUnifiedCodeBlockManager,
   type CodeBlockData,
   type UseUnifiedCodeBlockManagerReturn,
   type UseCodeBlockManagerOptions,
-} from './useUnifiedCodeBlockManager';
+} from './hooks/useUnifiedCodeBlockManager';
 
 export {
   useStreamingMarkdown,
   type UseStreamingMarkdownOptions,
   type UseStreamingMarkdownReturn,
-} from './useStreamingMarkdown';
+} from './hooks/useStreamingMarkdown';
 
 export {
   useStaticMarkdown,
   type UseStaticMarkdownOptions,
   type UseStaticMarkdownReturn,
-} from './useStaticMarkdown';
+} from './hooks/useStaticMarkdown';
 
-export { default as CodeBlock } from './CodeBlock';
-export type { CodeBlockProps } from './CodeBlock';
+export { default as CodeBlock } from './components/CodeBlock';
+export type { CodeBlockProps } from './components/CodeBlock';

@@ -18,14 +18,15 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
-    }
+    },
+    "./styles.css": "./dist/react/styles.css"
   },
   "files": [
     "dist",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/react/styles.css dist/react/styles.css",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

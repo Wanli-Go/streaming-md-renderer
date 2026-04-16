@@ -6,8 +6,8 @@
  */
 import React from 'react';
 import classNames from 'classnames';
-import { ContentToken } from '../parser/types';
-import { MathRenderer } from './MathRenderer';
+import { ContentToken } from '../../parser/types';
+import { MathBlock } from './MathBlock';
 
 // ── Shared types ─────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ export const renderCellContent = (text: string, keyPrefix: string): React.ReactN
       return <em key={`${keyPrefix}-${i}`}>{part.slice(1, -1)}</em>;
     }
     if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={`${keyPrefix}-${i}`} className="font-mono text-amber-100">{part.slice(1, -1)}</code>;
+      return <code key={`${keyPrefix}-${i}`} className="smd-inline-code">{part.slice(1, -1)}</code>;
     }
     return part;
   });
@@ -49,20 +49,22 @@ export const renderCellContent = (text: string, keyPrefix: string): React.ReactN
 
 /**
  * Build a <table> React element from accumulated row data.
+ *
+ * @param reduceMotion - if true, skip fade-in animation on table rows
  */
-export const buildTableElement = (id: string, rows: TableRowData[]): React.ReactNode => {
+export const buildTableElement = (id: string, rows: TableRowData[], reduceMotion?: boolean): React.ReactNode => {
   const headerRows = rows.filter(r => r.isHeader);
   const bodyRows = rows.filter(r => !r.isHeader);
   return (
-    <table key={id} className="border-collapse w-full my-3 text-sm">
+    <table key={id} className="smd-table">
       {headerRows.length > 0 && (
         <thead>
           {headerRows.map((row, ri) => (
-            <tr key={`${id}-h${ri}`} className="border-b border-white/20 fade-in">
+            <tr key={`${id}-h${ri}`} className={classNames('smd-thead-row', { 'fade-in': !reduceMotion })}>
               {row.cells.map((cell, ci) => (
                 <th
                   key={`${id}-h${ri}-c${ci}`}
-                  className="px-3 py-1.5 text-left font-semibold bg-white/20 border border-white/10"
+                  className="smd-th"
                 >
                   {renderCellContent(cell, `${id}-h${ri}-c${ci}`)}
                 </th>
@@ -74,11 +76,11 @@ export const buildTableElement = (id: string, rows: TableRowData[]): React.React
       {bodyRows.length > 0 && (
         <tbody>
           {bodyRows.map((row, ri) => (
-            <tr key={`${id}-b${ri}`} className="border-b border-white/10 even:bg-white/[0.03] fade-in">
+            <tr key={`${id}-b${ri}`} className={classNames('smd-tbody-row', { 'fade-in': !reduceMotion })}>
               {row.cells.map((cell, ci) => (
                 <td
                   key={`${id}-b${ri}-c${ci}`}
-                  className="px-3 py-1.5 border border-white/10"
+                  className="smd-td"
                 >
                   {renderCellContent(cell, `${id}-b${ri}-c${ci}`)}
                 </td>
@@ -117,12 +119,11 @@ export function renderSimpleToken(
           <span
             className={classNames({
               'fade-in': !reduceMotion,
-              'text-xl': token.metadata?.titleLevel === 3,
-              'text-2xl': token.metadata?.titleLevel === 2,
-              'text-3xl': token.metadata?.titleLevel === 1,
-              'font-bold': token.metadata?.isBold,
-              'font-mono': token.metadata?.isBackticked,
-              'text-amber-100': token.metadata?.isBackticked,
+              'smd-text-h3': token.metadata?.titleLevel === 3,
+              'smd-text-h2': token.metadata?.titleLevel === 2,
+              'smd-text-h1': token.metadata?.titleLevel === 1,
+              'smd-text-bold': token.metadata?.isBold,
+              'smd-text-code': token.metadata?.isBackticked,
             })}
             key={elementId}
           >
@@ -135,7 +136,7 @@ export function renderSimpleToken(
     case 'horizontal_rule':
       return {
         element: (
-          <hr key={elementId} className="opacity-60 h-0.5 bg-gray-100 rounded-2xl mr-5 mt-2 mb-2" />
+          <hr key={elementId} className="smd-hr" />
         ),
         type: 'other',
       };
@@ -145,7 +146,7 @@ export function renderSimpleToken(
         element: (
           <span
             key={elementId}
-            className="pi pi-angle-right !text-xs"
+            className="pi pi-angle-right smd-list-marker"
             style={{ lineHeight: '24px' }}
           />
         ),
@@ -163,10 +164,11 @@ export function renderSimpleToken(
       const isDisplay = token.type === 'math_block';
       return {
         element: (
-          <MathRenderer
+          <MathBlock
             key={elementId}
             math={token.content}
             displayMode={isDisplay}
+            reduceMotion={reduceMotion}
           />
         ),
         type: 'other',
